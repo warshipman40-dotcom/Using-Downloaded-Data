@@ -3,6 +3,8 @@ from pygal_maps_world.i18n import COUNTRIES
 def get_country_code(country_name):
     """Returns the Pygal 2-digit country code for a country"""
     for code, name in COUNTRIES.items():
+        #these are countries which we can't get a return of the country code
+        #therefore we have to manually use an if/elif to return country code
         if name == country_name:
             return code
         elif country_name == 'Egypt, Arab Rep.':

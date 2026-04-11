@@ -86,7 +86,7 @@ print(len(cc_pops_1), len(cc_pops_2), len(cc_pops_3))
 #class takes an RGB color in hex format
 #RotateStyle function returns a style object which gets stored in wm_style
 #LightColorizedStyle will use lighter colors
-wm_style = RCS("#336699", base_style = LCS)
+wm_style = RCS("#567689", base_style = LCS)
 #we pass this in as a keyword argument (keyword args order doesn't matter)
 wm = World(style = wm_style)
 wm2 = World(style = wm_style)
