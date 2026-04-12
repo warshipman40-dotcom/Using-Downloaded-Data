@@ -7,74 +7,51 @@ from pygal_maps_world.maps import World
 from pygal.style import RotateStyle as RCS, LightColorizedStyle as LCS
 import os
 
-#load the data into a list
-filename = "POPULATION_DATA.csv"
-#opens the file and stores it into f
-with open(filename) as f:
-    reader = csv.reader(f)
-    cc_populations = {}
-    for line in range(4):
-        next(reader)
-    header = next(reader)
-    year_index = header.index("2024")
-    for row in reader:
-        country_name = row[0]
-        population = row[year_index]
-        if population != "":
-            population = int(float(population))
-            code = get_country_code(country_name)
-            if code:
-                cc_populations[code] = population
 
-filename = "GDP.csv"
-with open(filename) as f:
-    reader = csv.reader(f)
-    cc_gdp = {}
-    #skips the next 4 lines (metadata)
-    for line in range(4):
-        next(reader)
-    #this gives each possible header (always on first line for csv files)
-    header = next(reader)
-    #this dataset only goes up to 2020
-    year_index = header.index("2024")
-    #examines each row in this file
-    for row in reader:
-        #country name is in first row
-        country_name = row[0]
-        #gets the gdp for each country in 2020
-        gdp = row[year_index]
-        #if the gdp is not an empty string
-        if gdp != "":
-            #convert the gdp to an int by first floating and then removing decimal point
-            gdp = int(float(gdp))
-            #store the country code using our function
-            code = get_country_code(country_name)
-            if code:
-                #population the gdp dictionary
-                cc_gdp[code] = gdp
+def read_csv_file(filename, year):
+    """Function that reads CSV files"""
+    #this opens the file and stores it in f
+    with open(filename) as f:
+        #this creates a reader that reads the contents of the csv file
+        #it returns each row as a list of strings
+        reader = csv.reader(f)
+        #creates a dictionary 
+        dictionary = {}
+        #creates a for loop that occurs 4 times (this ensures that we skip the metadata)
+        for line in range(4):
+            next(reader)
+        #after skipping the metadata, we now can store the values of header 
+        header = next(reader)
+        #this stores the index of our year in the variable year_index
+        #this variable can be used to find other key information of our country
+        year_index = header.index(year)
+        #this iterats through the various rows in the reader
+        for row in reader:
+            #stores country_name
+            country_name = row[0]
+            #stores the value of whatever e.g GDP, population
+            val = row[year_index]
+            #ensures the value is not an empty string
+            if val != "":
+                #uses int(float()) to turn a string into an int (we can't directly convert strings to int)
+                val = int(float(val))
+                #using a function we already created we can get the code of the country
+                code = get_country_code(country_name)
+                #if the code exists (strings return truthy)
+                if code:
+                    #we then store the country code (key) and the value of whatever (value) in the dictionary 
+                    dictionary[code] = val
+    #returns the dictionary so that it can be used
+    return dictionary
 
-filename = "GDP_PER_CAPITA.csv"
-with open(filename) as f:
-    reader = csv.reader(f)
-    cc_gdps_per_capita = {}
-    #skip 4 lines because the first 4 lines contain metadata
-    for line in range(4):
-        next(reader)
-    #stores the value of each header in a variable
-    header = next(reader)
-    #gets the index of the year 2024
-    year_index = header.index("2024")
-    #examines each row in the file
-    for row in reader:
-        #first row will contain country name
-        country_name = row[0]
-        gdp_per_capita = row[year_index]
-        if gdp_per_capita != "":
-            gdp_per_capita = float(gdp_per_capita)
-            code = get_country_code(country_name)
-            if code:
-                cc_gdps_per_capita[code] = gdp_per_capita
+#reminder to self CRTL + / creates multi-line comments
 
+#stores these dictionaries in these variables
+#because the function returned a dictionary and we store the value in the variable
+#the variable will therefore become a dictionary
+cc_populations = read_csv_file("POPULATION_DATA.csv", "2024")
+cc_gdp = read_csv_file("GDP.csv", "2024")
+cc_gdps_per_capita = read_csv_file("GDP_PER_CAPITA.csv", "2024")
 #creates 3 empty dictionaries to store the country code and population
 cc_pops_1, cc_pops_2, cc_pops_3 = {}, {}, {}
 #users tuple unpacking to unpack the key (cc) and value (population)
