@@ -26,14 +26,17 @@ with open(filename) as f:
             if code:
                 cc_populations[code] = population
 
-filename = "gdp.csv"
+filename = "GDP.csv"
 with open(filename) as f:
     reader = csv.reader(f)
     cc_gdp = {}
+    #skips the next 4 lines (metadata)
+    for line in range(4):
+        next(reader)
     #this gives each possible header (always on first line for csv files)
     header = next(reader)
     #this dataset only goes up to 2020
-    year_index = header.index("2020")
+    year_index = header.index("2024")
     #examines each row in this file
     for row in reader:
         #country name is in first row
@@ -118,7 +121,7 @@ wm2 = World(style = wm_style)
 wm3 = World(style = wm_style)
 #creates the title for the worldmap
 wm.title = "World population in 2024 by Country"
-wm2.title = "GDP per country in 2020"
+wm2.title = "GDP per country in 2024"
 wm3.title = "GDP per capita per country 2024"
 #adds a label and list of countries to worldmap
 #each label and country will be differently colored
@@ -144,8 +147,8 @@ os.startfile("gdp_per_capita.svg")
 
 
 
-
-
+#plan for later (modulariziation?)
+#find a more recent GDP list
 
 
 
