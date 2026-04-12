@@ -6,13 +6,25 @@ from country_codes import get_country_code
 from pygal_maps_world.maps import World
 from pygal.style import RotateStyle as RCS, LightColorizedStyle as LCS
 import os
+
 #load the data into a list
-filename = "population_data.json"
+filename = "POPULATION_DATA.csv"
 #opens the file and stores it into f
 with open(filename) as f:
-    #then uses json.load to convert data into a format python can use
-    #this is a list in our case
-    pop_data = json.load(f)
+    reader = csv.reader(f)
+    cc_populations = {}
+    for line in range(4):
+        next(reader)
+    header = next(reader)
+    year_index = header.index("2024")
+    for row in reader:
+        country_name = row[0]
+        population = row[year_index]
+        if population != "":
+            population = int(float(population))
+            code = get_country_code(country_name)
+            if code:
+                cc_populations[code] = population
 
 filename = "gdp.csv"
 with open(filename) as f:
@@ -37,23 +49,6 @@ with open(filename) as f:
             if code:
                 #population the gdp dictionary
                 cc_gdp[code] = gdp
-
-#builds a dictionary of population data
-cc_populations = {}
-for pop_dict in pop_data:
-    #checks for 2010 in the "Year" key of each dictionary
-    #dictionary is outdated and only includes up to 2010
-    if pop_dict["Year"] == "2010":
-        #stores the relevant values in variables
-        country_name = pop_dict["Country Name"]
-        #the float turns into a decimal then the int drops the decimal
-        population = int(float(pop_dict["Value"]))
-        #population = "{:,}".format(population)
-        code = get_country_code(country_name)
-        if code:
-            #buidls a dictionary using country code as key and population as value
-            cc_populations[code] = population
-            #print(code + ": " + str(population))
 
 filename = "GDP_PER_CAPITA.csv"
 with open(filename) as f:
@@ -122,7 +117,7 @@ wm = World(style = wm_style)
 wm2 = World(style = wm_style)
 wm3 = World(style = wm_style)
 #creates the title for the worldmap
-wm.title = "World population in 2010 by Country"
+wm.title = "World population in 2024 by Country"
 wm2.title = "GDP per country in 2020"
 wm3.title = "GDP per capita per country 2024"
 #adds a label and list of countries to worldmap
@@ -146,3 +141,33 @@ wm3.render_to_file("gdp_per_capita.svg")
 os.startfile("world_population.svg")
 os.startfile("world_gdp.svg")
 os.startfile("gdp_per_capita.svg")
+
+
+
+
+
+
+
+
+#JSON example for personal review and reference
+
+#with open(filename) as f:
+    #then uses json.load to convert data into a format python can use
+    #this is a list in our case
+    #pop_data = json.load(f)
+
+#cc_populations = {}
+#for pop_dict in pop_data:
+    #checks for 2010 in the "Year" key of each dictionary
+    #dictionary is outdated and only includes up to 2010
+    #if pop_dict["Year"] == "2010":
+        #stores the relevant values in variables
+        #country_name = pop_dict["Country Name"]
+        #the float turns into a decimal then the int drops the decimal
+        #population = int(float(pop_dict["Value"]))
+        #population = "{:,}".format(population)
+        #code = get_country_code(country_name)
+        #if code:
+            #builds a dictionary using country code as key and population as value
+            #cc_populations[code] = population
+            #print(code + ": " + str(population))
