@@ -20,12 +20,13 @@ with open(filename) as f:
     cc_gdp = {}
     #this gives each possible header (always on first line for csv files)
     header = next(reader)
-    year_index = header.index("2024")
+    #this dataset only goes up to 2020
+    year_index = header.index("2020")
     #examines each row in this file
     for row in reader:
         #country name is in first row
         country_name = row[0]
-        #gets the gdp for each country in 2022
+        #gets the gdp for each country in 2020
         gdp = row[year_index]
         #if the gdp is not an empty string
         if gdp != "":
@@ -39,10 +40,10 @@ with open(filename) as f:
 
 #builds a dictionary of population data
 cc_populations = {}
-#print the 2024 population for each country
 for pop_dict in pop_data:
     #checks for 2010 in the "Year" key of each dictionary
-    if pop_dict["Year"] == "2024":
+    #dictionary is outdated and only includes up to 2010
+    if pop_dict["Year"] == "2010":
         #stores the relevant values in variables
         country_name = pop_dict["Country Name"]
         #the float turns into a decimal then the int drops the decimal
@@ -71,7 +72,7 @@ with open(filename) as f:
         country_name = row[0]
         gdp_per_capita = row[year_index]
         if gdp_per_capita != "":
-            gdp = float(gdp_per_capita)
+            gdp_per_capita = float(gdp_per_capita)
             code = get_country_code(country_name)
             if code:
                 cc_gdps_per_capita[code] = gdp_per_capita
@@ -121,8 +122,8 @@ wm = World(style = wm_style)
 wm2 = World(style = wm_style)
 wm3 = World(style = wm_style)
 #creates the title for the worldmap
-wm.title = "World population in 2024 by Country"
-wm2.title = "Gdps for each country in 2024"
+wm.title = "World population in 2010 by Country"
+wm2.title = "GDP per country in 2020"
 wm3.title = "GDP per capita per country 2024"
 #adds a label and list of countries to worldmap
 #each label and country will be differently colored
@@ -140,7 +141,7 @@ wm3.add(">10000 USD per capita", cc_gdps_per_capita_high)
 #renders the worldmap into an svg file
 wm.render_to_file("world_population.svg")
 wm2.render_to_file("world_gdp.svg")
-wm3.render_to_file("world_gdp_per_capita.svg")
+wm3.render_to_file("gdp_per_capita.svg")
 #automatically opens the file
 os.startfile("world_population.svg")
 os.startfile("world_gdp.svg")
