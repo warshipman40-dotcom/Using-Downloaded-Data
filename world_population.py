@@ -44,6 +44,39 @@ def read_csv_file(filename, year):
     #returns the dictionary so that it can be used
     return dictionary
 
+def create_dif_categories(main_dictionary, val_one, val_two):
+    #defines three empty dictionaries
+    dict_one, dict_two, dict_three = {}, {}, {}
+    #uses tuple unpacking to get cc(key) and val(value) of the dictionary
+    for cc, val in main_dictionary.items():
+        #uses an if/elif/else conditional to determine where each country code and value should be placed
+        if val < val_one:
+            dict_one[cc] = val
+        elif val < val_two:
+            dict_two[cc] = val
+        else:
+            dict_three[cc] = val
+    #returns all three dictionaries (tuple unpacking is necessary with 3 variables)
+    return dict_one, dict_two, dict_three
+
+def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, filename):
+    #styles the worldmap using a more attractive style
+    #class takes an RGB color in hex format
+    #RotateStyle function returns a style object which gets stored in wm_style
+    #LightColorizedStyle will use lighter colors
+    wm_style = RCS(rgb, base_style = LCS)
+    #creates an instance of the worldmap class, using a keyword argument to set default style to wm_style
+    wm = World(style = wm_style)
+    #adds a title to the worldmap
+    wm.title = title
+    #adds the labels and values to the worldmap
+    wm.add(label_one, dict_one)
+    wm.add(label_two, dict_two)
+    wm.add(label_three, dict_three)
+    #renders this worldmap to a file
+    wm.render_to_file(filename)
+    #automatically opens the file
+    os.startfile(filename)
 #reminder to self CRTL + / creates multi-line comments
 
 #stores these dictionaries in these variables
@@ -53,79 +86,17 @@ cc_populations = read_csv_file("POPULATION_DATA.csv", "2024")
 cc_gdp = read_csv_file("GDP.csv", "2024")
 cc_gdps_per_capita = read_csv_file("GDP_PER_CAPITA.csv", "2024")
 #creates 3 empty dictionaries to store the country code and population
-cc_pops_1, cc_pops_2, cc_pops_3 = {}, {}, {}
-#users tuple unpacking to unpack the key (cc) and value (population)
-#this will sort the populations accordingly based on their values
-for cc, pop in cc_populations.items():
-    if pop < 10000000:
-        cc_pops_1[cc] = pop
-    elif pop < 1000000000:
-        cc_pops_2[cc] = pop
-    else:
-        cc_pops_3[cc] = pop
 
-#the subsequent lines will loop over the values of cc (country code) and total gdp
-#using if / else conditional, they will create seperate lists which will then be used by an instance of World() and added to the world map
-cc_gdp_1, cc_gdp_2, cc_gdp_3 = {}, {}, {}
-for cc, gdp, in cc_gdp.items():
-    if gdp < 1000000000000:        # under 1 trillion
-        cc_gdp_1[cc] = gdp
-    elif gdp < 10000000000000:     # 1T to 10T
-        cc_gdp_2[cc] = gdp
-    else:                          # 10T+
-        cc_gdp_3[cc] = gdp
+cc_pops_1, cc_pops_2, cc_pops_3 = create_dif_categories(cc_populations, 10000000, 1000000000)
+cc_gdp_1, cc_gdp_2, cc_gdp_3, = create_dif_categories(cc_gdp, 1000000000000, 10000000000000)
+cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, cc_gdps_per_capita_high, = create_dif_categories(cc_gdps_per_capita, 1000, 10000)
 
-cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, cc_gdps_per_capita_high = {}, {}, {}
-for cc, gdp_per_capita in cc_gdps_per_capita.items():
-    if gdp_per_capita < 1000:
-        cc_gdps_per_capita_low[cc] = gdp_per_capita
-    elif gdp_per_capita < 10000:
-        cc_gdps_per_capita_moderate[cc] = gdp_per_capita
-    else:
-        cc_gdps_per_capita_high[cc] = gdp_per_capita
-
-
-#creates an instance of worldmap
-#wm = World()
-#styles the worldmap using a more attractive style
-#class takes an RGB color in hex format
-#RotateStyle function returns a style object which gets stored in wm_style
-#LightColorizedStyle will use lighter colors
-wm_style = RCS("#567689", base_style = LCS)
-#we pass this in as a keyword argument (keyword args order doesn't matter)
-wm = World(style = wm_style)
-wm2 = World(style = wm_style)
-wm3 = World(style = wm_style)
-#creates the title for the worldmap
-wm.title = "World population in 2024 by Country"
-wm2.title = "GDP per country in 2024"
-wm3.title = "GDP per capita per country 2024"
-#adds a label and list of countries to worldmap
-#each label and country will be differently colored
-wm.add("0 - 10m", cc_pops_1)
-wm.add("10m - 1bn", cc_pops_2)
-wm.add(">1bn", cc_pops_3)
-
-wm2.add("<1t GDP", cc_gdp_1)
-wm2.add("1t to 10t GDP", cc_gdp_2)
-wm2.add(">10t GDP", cc_gdp_3)
-
-wm3.add("<1000 USd per capita", cc_gdps_per_capita_low)
-wm3.add("1000 to 10000 USD per capita", cc_gdps_per_capita_moderate)
-wm3.add(">10000 USD per capita", cc_gdps_per_capita_high)
-#renders the worldmap into an svg file
-wm.render_to_file("world_population.svg")
-wm2.render_to_file("world_gdp.svg")
-wm3.render_to_file("gdp_per_capita.svg")
-#automatically opens the file
-os.startfile("world_population.svg")
-os.startfile("world_gdp.svg")
-os.startfile("gdp_per_capita.svg")
-
-
-
-#plan for later (modulariziation?)
-#find a more recent GDP list
+create_world_map("#567689", "World Population in 2024 by Country", "0 - 10m", "10m - 1bn", ">1bn", 
+    cc_pops_1, cc_pops_2, cc_pops_3, "world_population.svg")
+create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
+    cc_gdp_1, cc_gdp_2, cc_gdp_3, "world_gdp.svg")
+create_world_map("#567879", "GDP per capita 2024", "<1000 USD per capita", "1000 - 10000 USD per capita", 
+    ">10000 USD per capita", cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, cc_gdps_per_capita_high, "gdp_per_capita.svg")
 
 
 
