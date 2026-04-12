@@ -16,6 +16,7 @@ def read_csv_file(filename, year):
             reader = csv.reader(f)
             #creates a dictionary 
             dictionary = {}
+            country_name_dict = {}
             #creates a for loop that occurs 4 times (this ensures that we skip the metadata)
             for line in range(4):
                 next(reader)
@@ -47,12 +48,12 @@ def read_csv_file(filename, year):
                     if code:
                         #we then store the country code (key) and the value of whatever (value) in the dictionary 
                         dictionary[code] = val
+                        country_name_dict[code] = country_name
         #returns the dictionary so that it can be used
-        return dictionary
+        return dictionary, country_name_dict
     except FileNotFoundError:
         print(f"File not found: {filename}")
         return None
-
 def create_dif_categories(main_dictionary, val_one, val_two):
     #defines three empty dictionaries
     dict_one, dict_two, dict_three = {}, {}, {}
@@ -69,7 +70,9 @@ def create_dif_categories(main_dictionary, val_one, val_two):
     #returns all three dictionaries (tuple unpacking is necessary with 3 variables)
     return dict_one, dict_two, dict_three
 
-def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, filename):
+#right now we have 3 labels and 3 dictioanries for each worldmap
+#each dictionary will contain the country code and a value for whatever (e.g GDP, population)
+def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, country_name_dict, filename, use_dollar = True):
     #styles the worldmap using a more attractive style
     #class takes an RGB color in hex format
     #RotateStyle function returns a style object which gets stored in wm_style
@@ -85,10 +88,17 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
     wm.add(label_three, dict_three)
     #what we pass into pygal is a dictionary 
     #wm.value converts each entry to a tuple like ("ca", 38,000,000)
-    #x = (key, value) x[0] returns key, x[1] returns value
-    #x[1] will return the second value of the typle, and wm._value_format() will format it
+    #tuple_info = (key, value) tuple_info[0] returns key, tuple_info[1] returns value
+    #tuple_info[1] will return the second value of the typle, and wm._value_format() will format it
     #pygal converts dictionary to tuple
-    wm._value_format = lambda x : "{:,}".format(x[1])
+    #tuple_info[0] gets the country code (e.g "CA")
+    #country_name_dict.get() retrieves the value associated with a specific key
+    #E.g "CA" is a key, and country_name_dict.get["CA"] returns the value "Canada"
+    #use_dollar is a boolean which chooses if the value is a dollar or not
+    if use_dollar:
+        wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "${:,}".format(tuple_info[1])
+    else:
+        wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "{:,}".format(tuple_info[1])
     #renders this worldmap to a file
     wm.render_to_file(filename)
     #automatically opens the file
@@ -98,9 +108,9 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
 #stores these dictionaries in these variables
 #because the function returned a dictionary and we store the value in the variable
 #the variable will therefore become a dictionary
-cc_populations = read_csv_file("POPULATION_DATA.csv", "2024")
-cc_gdp = read_csv_file("GDP.csv", "2024")
-cc_gdps_per_capita = read_csv_file("GDP_PER_CAPITA.csv", "2024")
+cc_populations, pop_country_names = read_csv_file("POPULATION_DATA.csv", "2024")
+cc_gdp, gdp_country_names = read_csv_file("GDP.csv", "2024")
+cc_gdps_per_capita, gdp_per_capita_country_names = read_csv_file("GDP_PER_CAPITA.csv", "2024")
 #creates 3 empty dictionaries to store the country code and population
 
 cc_pops_1, cc_pops_2, cc_pops_3 = create_dif_categories(cc_populations, 10000000, 1000000000)
@@ -108,14 +118,14 @@ cc_gdp_1, cc_gdp_2, cc_gdp_3, = create_dif_categories(cc_gdp, 1000000000000, 100
 cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, cc_gdps_per_capita_high, = create_dif_categories(cc_gdps_per_capita, 1000, 10000)
 
 create_world_map("#567689", "World Population in 2024 by Country", "0 - 10m", "10m - 1bn", ">1bn", 
-    cc_pops_1, cc_pops_2, cc_pops_3, "world_population.svg")
+    cc_pops_1, cc_pops_2, cc_pops_3, pop_country_names, "world_population.svg", False)
 
 create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
-    cc_gdp_1, cc_gdp_2, cc_gdp_3, "world_gdp.svg")
+    cc_gdp_1, cc_gdp_2, cc_gdp_3, gdp_country_names, "world_gdp.svg", True)
 
 create_world_map("#567879", "GDP per capita 2024", "<1000 USD per capita", "1000 - 10000 USD per capita", 
     ">10000 USD per capita", cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, 
-    cc_gdps_per_capita_high, "gdp_per_capita.svg")
+    cc_gdps_per_capita_high, gdp_per_capita_country_names, "gdp_per_capita.svg", True)
 
 #JSON example for personal review and reference
 
