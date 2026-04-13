@@ -54,6 +54,7 @@ def read_csv_file(filename, year):
     except FileNotFoundError:
         print(f"File not found: {filename}")
         return None
+    
 def create_dif_categories(main_dictionary, val_one, val_two):
     #defines three empty dictionaries
     dict_one, dict_two, dict_three = {}, {}, {}
@@ -70,9 +71,23 @@ def create_dif_categories(main_dictionary, val_one, val_two):
     #returns all three dictionaries (tuple unpacking is necessary with 3 variables)
     return dict_one, dict_two, dict_three
 
+def get_average(data_dict):
+    average = round(sum(data_dict.values()) / len(data_dict), 3)
+    average = "{:,}".format(average)
+    return average
+
+def percentage_of_world_data(data_dict):
+    total_percentage = {}
+    world_total = round(sum(data_dict.values()), 2)
+    for cc, value in data_dict.items():
+        total_percentage[cc] = round((value / world_total) * 100, 2)
+        #total_percentage[cc] = "{:,}".format(round((value / world_total) * 100, 2))
+
+    return total_percentage
+
 #right now we have 3 labels and 3 dictioanries for each worldmap
 #each dictionary will contain the country code and a value for whatever (e.g GDP, population)
-def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, country_name_dict, filename, use_dollar = True):
+def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, percent_dict, country_name_dict, filename, avg_val, use_dollar = True):
     #styles the worldmap using a more attractive style
     #class takes an RGB color in hex format
     #RotateStyle function returns a style object which gets stored in wm_style
@@ -81,8 +96,12 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
     #creates an instance of the worldmap class, using a keyword argument to set default style to wm_style
     wm = World(style = wm_style)
     #adds a title to the worldmap
-    wm.title = title + "(Source : World Bank)"
+    if use_dollar:
+        wm.title = title + f"(Source : World Bank) Global Average : ${avg_val}"
+    else:
+        wm.title = title + f"(Source : World Bank) Global Average : {avg_val}"
     #adds the labels and values to the worldmap
+    #what we need to try to do right now is to add both the percentages of each value (gdp / population of each country)
     wm.add(label_one, dict_one)
     wm.add(label_two, dict_two)
     wm.add(label_three, dict_three)
@@ -96,9 +115,9 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
     #E.g "CA" is a key, and country_name_dict.get["CA"] returns the value "Canada"
     #use_dollar is a boolean which chooses if the value is a dollar or not
     if use_dollar:
-        wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "${:,}".format(tuple_info[1])
+        wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "${:,}".format(tuple_info[1]) + "\n" + str(percent_dict.get(tuple_info[0])) + "% of world"
     else:
-        wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "{:,}".format(tuple_info[1])
+        wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "{:,}".format(tuple_info[1]) + "\n" + str(percent_dict.get(tuple_info[0])) + "% of world"
     #renders this worldmap to a file
     wm.render_to_file(filename)
     #automatically opens the file
@@ -108,24 +127,36 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
 #stores these dictionaries in these variables
 #because the function returned a dictionary and we store the value in the variable
 #the variable will therefore become a dictionary
+#the first dictionary will include country code as the key and country population as value
+#the second dictionary will include country code as key, and country name as value
 cc_populations, pop_country_names = read_csv_file("POPULATION_DATA.csv", "2024")
 cc_gdp, gdp_country_names = read_csv_file("GDP.csv", "2024")
 cc_gdps_per_capita, gdp_per_capita_country_names = read_csv_file("GDP_PER_CAPITA.csv", "2024")
-#creates 3 empty dictionaries to store the country code and population
 
+#calculates the global average
+average_population = get_average(cc_populations)
+average_gdp = get_average(cc_gdp)
+average_gdp_per_capita = get_average(cc_gdps_per_capita)
+#creates 3 empty dictionaries to store the country code and population
 cc_pops_1, cc_pops_2, cc_pops_3 = create_dif_categories(cc_populations, 10000000, 1000000000)
 cc_gdp_1, cc_gdp_2, cc_gdp_3, = create_dif_categories(cc_gdp, 1000000000000, 10000000000000)
 cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, cc_gdps_per_capita_high, = create_dif_categories(cc_gdps_per_capita, 1000, 10000)
 
+#calculates percentages of world data
+#these dictionaries will include the country code, and the country percentage of the world
+population_world_percentage = percentage_of_world_data(cc_populations)
+gdp_world_percentage = percentage_of_world_data(cc_gdp)
+gdp_per_capita_world_percentage = percentage_of_world_data(cc_gdps_per_capita)
+
 create_world_map("#567689", "World Population in 2024 by Country", "0 - 10m", "10m - 1bn", ">1bn", 
-    cc_pops_1, cc_pops_2, cc_pops_3, pop_country_names, "world_population.svg", False)
+    cc_pops_1, cc_pops_2, cc_pops_3, population_world_percentage, pop_country_names, "world_population.svg", average_population, False)
 
-create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
-    cc_gdp_1, cc_gdp_2, cc_gdp_3, gdp_country_names, "world_gdp.svg", True)
+# create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
+#     cc_gdp_1, cc_gdp_2, cc_gdp_3, gdp_country_names, "world_gdp.svg", average_gdp, True)
 
-create_world_map("#567879", "GDP per capita 2024", "<1000 USD per capita", "1000 - 10000 USD per capita", 
-    ">10000 USD per capita", cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, 
-    cc_gdps_per_capita_high, gdp_per_capita_country_names, "gdp_per_capita.svg", True)
+# create_world_map("#567879", "GDP per capita 2024", "<1000 USD per capita", "1000 - 10000 USD per capita", 
+#     ">10000 USD per capita", cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, 
+#     cc_gdps_per_capita_high, gdp_per_capita_country_names, "gdp_per_capita.svg", average_gdp_per_capita, True)
 
 #JSON example for personal review and reference
 
