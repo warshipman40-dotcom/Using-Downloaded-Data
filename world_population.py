@@ -4,6 +4,7 @@ from country_codes import get_country_code
 from pygal_maps_world.maps import World
 from pygal.style import RotateStyle as RCS, LightColorizedStyle as LCS
 import os
+from itertools import islice
 
 
 def read_csv_file(filename, year):
@@ -80,14 +81,31 @@ def percentage_of_world_data(data_dict):
     total_percentage = {}
     world_total = round(sum(data_dict.values()), 2)
     for cc, value in data_dict.items():
-        total_percentage[cc] = round((value / world_total) * 100, 2)
+        total_percentage[cc] = round((value / world_total) * 100, 3)
         #total_percentage[cc] = "{:,}".format(round((value / world_total) * 100, 2))
-
     return total_percentage
 
-#right now we have 3 labels and 3 dictioanries for each worldmap
+def top_percentages(percentage_dict, num_countries = 5):
+    top_percentages = {}
+    #sorted(reverse = True) sorts the dictionary from highest to lowest value
+    #since sorted loops through the whole list and we use a lambda function, it basically loops through x[1] automatically
+    #percentage_dict.items() returns a value of tuple which cotnains the key and value
+    #key is a PARAMETER word that sorted EXPECTS
+    #key = lamda x : x[1] basically tells python to use the second part of each tuple
+    #example of what it looks like would be ("US", 18.08)
+    percentage_dict = sorted(percentage_dict.items(), key = lambda x: x[1], reverse = True)
+    #islice allows us to make a slice out of portions of iterators
+    #for very large datasets itertools is very efficient
+    for cc, value in islice(percentage_dict, 0, num_countries):
+        top_percentages[cc] = value        
+        #print(f"Country : {cc}, " + f"percentage {value}")
+    return top_percentages
+
+
+
+#right now we have 3 labels and 3 dictionaries for each worldmap
 #each dictionary will contain the country code and a value for whatever (e.g GDP, population)
-def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, percent_dict, country_name_dict, filename, avg_val, use_dollar = True):
+def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, dict_two, dict_three, percent_dict, country_name_dict, filename, avg_val, use_dollar = True, ):
     #styles the worldmap using a more attractive style
     #class takes an RGB color in hex format
     #RotateStyle function returns a style object which gets stored in wm_style
@@ -110,11 +128,12 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
     #tuple_info = (key, value) tuple_info[0] returns key, tuple_info[1] returns value
     #tuple_info[1] will return the second value of the typle, and wm._value_format() will format it
     #pygal converts dictionary to tuple
-    #tuple_info[0] gets the country code (e.g "CA")
-    #country_name_dict.get() retrieves the value associated with a specific key
-    #E.g "CA" is a key, and country_name_dict.get["CA"] returns the value "Canada"
     #use_dollar is a boolean which chooses if the value is a dollar or not
     if use_dollar:
+        #lamba is an anonymous function that will take in a paramater (tuple_info which will be a tuple)
+        #tuple_info[0] gets the country code (e.g "CA")
+        #country_name_dict.get() retrieves the value associated with a specific key
+        #E.g "CA" is a key, and country_name_dict.get["CA"] returns the value "Canada"
         wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "${:,}".format(tuple_info[1]) + "\n" + str(percent_dict.get(tuple_info[0])) + "% of world"
     else:
         wm._value_format = lambda tuple_info : country_name_dict.get(tuple_info[0]) + ": " + "{:,}".format(tuple_info[1]) + "\n" + str(percent_dict.get(tuple_info[0])) + "% of world"
@@ -148,15 +167,23 @@ population_world_percentage = percentage_of_world_data(cc_populations)
 gdp_world_percentage = percentage_of_world_data(cc_gdp)
 gdp_per_capita_world_percentage = percentage_of_world_data(cc_gdps_per_capita)
 
+top_population_percentages = top_percentages(population_world_percentage)
+top_gdp_percentages = top_percentages(gdp_world_percentage)
+top_gdp_per_capita_percentage = top_percentages(gdp_per_capita_world_percentage)
+
 create_world_map("#567689", "World Population in 2024 by Country", "0 - 10m", "10m - 1bn", ">1bn", 
-    cc_pops_1, cc_pops_2, cc_pops_3, population_world_percentage, pop_country_names, "world_population.svg", average_population, False)
+    cc_pops_1, cc_pops_2, cc_pops_3, population_world_percentage, pop_country_names, "world_population.svg", average_population, top_population_percentages, False)
 
-# create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
-#     cc_gdp_1, cc_gdp_2, cc_gdp_3, gdp_country_names, "world_gdp.svg", average_gdp, True)
+create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
+    cc_gdp_1, cc_gdp_2, cc_gdp_3, gdp_world_percentage, gdp_country_names, "world_gdp.svg", average_gdp, True)
 
-# create_world_map("#567879", "GDP per capita 2024", "<1000 USD per capita", "1000 - 10000 USD per capita", 
-#     ">10000 USD per capita", cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, 
-#     cc_gdps_per_capita_high, gdp_per_capita_country_names, "gdp_per_capita.svg", average_gdp_per_capita, True)
+create_world_map("#567879", "GDP per capita 2024", "<1000 USD per capita", "1000 - 10000 USD per capita", 
+    ">10000 USD per capita", cc_gdps_per_capita_low, cc_gdps_per_capita_moderate, 
+    cc_gdps_per_capita_high, gdp_per_capita_world_percentage, gdp_per_capita_country_names, "gdp_per_capita.svg", average_gdp_per_capita, True)
+
+#print(top_percentages(population_world_percentage))
+
+
 
 #JSON example for personal review and reference
 
