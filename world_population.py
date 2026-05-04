@@ -4,7 +4,22 @@ from country_codes import get_country_code
 from pygal_maps_world.maps import World
 from pygal.style import RotateStyle as RCS, LightColorizedStyle as LCS
 import os
+import sys
 from itertools import islice
+
+#necessary for CSV file
+#added a resource path that takes our relative_path as a param
+#this allows exe versions to run the files
+def resource_path(relative_path):
+    try:
+        #Pyinstaller Temp folder
+        #if running as an exe uses something like C:\Temp\_MEI12345\dice_gif.gif
+        base_path = sys._MEIPASS  
+    #exception attribute error in the case we don't use pyinstaller and run normally
+    except AttributeError:
+        base_path = "."
+    #for example if running normally will return ./dice_gif.gif
+    return os.path.join(base_path, relative_path)
 
 
 def read_csv_file(filename, year):
@@ -148,9 +163,9 @@ def create_world_map(rgb, title, label_one, label_two, label_three, dict_one, di
 #the variable will therefore become a dictionary
 #the first dictionary will include country code as the key and country population as value
 #the second dictionary will include country code as key, and country name as value
-cc_populations, pop_country_names = read_csv_file("POPULATION_DATA.csv", "2024")
-cc_gdp, gdp_country_names = read_csv_file("GDP.csv", "2024")
-cc_gdps_per_capita, gdp_per_capita_country_names = read_csv_file("GDP_PER_CAPITA.csv", "2024")
+cc_populations, pop_country_names = read_csv_file(resource_path("POPULATION_DATA.csv"), "2024")
+cc_gdp, gdp_country_names = read_csv_file(resource_path("GDP.csv"), "2024")
+cc_gdps_per_capita, gdp_per_capita_country_names = read_csv_file(resource_path("GDP_PER_CAPITA.csv"), "2024")
 
 #calculates the global average
 average_population = get_average(cc_populations)
@@ -172,7 +187,7 @@ top_gdp_percentages = top_percentages(gdp_world_percentage)
 top_gdp_per_capita_percentage = top_percentages(gdp_per_capita_world_percentage)
 
 create_world_map("#567689", "World Population in 2024 by Country", "0 - 10m", "10m - 1bn", ">1bn", 
-    cc_pops_1, cc_pops_2, cc_pops_3, population_world_percentage, pop_country_names, "world_population.svg", average_population, top_population_percentages, False)
+    cc_pops_1, cc_pops_2, cc_pops_3, population_world_percentage, pop_country_names, "world_population.svg", average_population, False)
 
 create_world_map("#567689", "GDP per country in 2024", "<1t GDP", "1t - 10t GDP", ">10t GDP", 
     cc_gdp_1, cc_gdp_2, cc_gdp_3, gdp_world_percentage, gdp_country_names, "world_gdp.svg", average_gdp, True)
